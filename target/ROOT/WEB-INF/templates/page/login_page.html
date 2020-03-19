@@ -1,0 +1,358 @@
+<!--
+   登录和注册页面
+-->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>北部湾大学二手交易平台</title>
+    <script th:src="@{js/jquery-1.3.2.min.js}"></script>
+    <script th:src="@{js/login/login_page.js}"></script>
+    <link rel="icon" th:href="@{img/page_icon.png}"/>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <!-- Include FontAwesome CSS if you want to use feedback icons provided by FontAwesome -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/fontawesome/4.1.0/css/font-awesome.min.css" />
+    <!-- BootstrapValidator CSS -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/jquery.bootstrapvalidator/0.5.0/css/bootstrapValidator.min.css"/>
+    <!-- jQuery and Bootstrap JS -->
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <!-- 一个前端校验插件 BootstrapValidator JS -->
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery.bootstrapvalidator/0.5.0/js/bootstrapValidator.min.js"></script>
+    <!--    cookie plugin-->
+    <script src="https://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="row" >
+        <div class="col-md-8 col-md-offset-2">
+            <div class="page-header">
+                <!--                <h2>登录</h2>-->
+                <a href="#" id="login" class="btn btn-primary btn-lg disabled" role="button">登录</a>
+                <a href="#" id="regist" class="btn btn-primary btn-lg active" role="button">注册</a>
+                <a th:href="@{/}" style="float:right" class="btn btn-primary btn-lg active" role="button">返回首页</a>
+            </div>
+<!--            登录部分-->
+            <div id="section_login">
+                <form  id="loginForm" th:action="@{/signin.do}" method="post" class="form-horizontal">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">学号： </label>
+                    <div class="col-sm-5">
+                        <input type="text" class="form-control" name="sid" id="account_sid" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">密码：</label>
+                    <div class="col-sm-5">
+                        <input type="password" class="form-control" name="password" id="account_pwd" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 control-label"></label>
+                    <div class="col-sm-5">
+                        <!-- 记住用户名复选框 -->
+                        <input type="checkbox" name="remember_account" id="remember_account" />
+                        <label>记住账号密码</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <!-- Do NOT use name="submit" or id="submit" for the Submit button -->
+                        <button type="submit" class="btn btn-default">登录</button>
+                    </div>
+                </div>
+            </form>
+            </div>
+<!--            //注册部分-->
+            <div id="section_regist">
+                <form th:action="@{/insertUser.do}"  id="registrationForm" method="POST" class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">学号： </label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" name="sid" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">用户名：</label>
+                        <div class="col-sm-5">
+                            <input type="text" class="form-control" name="username" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">密码：</label>
+                        <div class="col-sm-5">
+                            <input type="password" class="form-control" name="password" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">确认密码：</label>
+                        <div class="col-sm-5">
+                            <input type="password" class="form-control" name="password2" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-9 col-sm-offset-3">
+                            <!-- Do NOT use name="submit" or id="submit" for the Submit button -->
+                            <button type="submit" class="btn btn-default">注册</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Small modal 模态框-->
+<div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="loginModaltitle">登录结果</h4>
+            </div>
+            <div class="modal-body">
+                <span id="modal_result"></span><span id="modal_name"></span>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary"><a style="color:#fff" th:href="@{/}">返回首页</a></button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+
+    function saveUserInfo() {
+        console.log("saveUserInfo cookie!")
+        //使用cookie记住账号密码 （单纯的不想每次都手写了）, 登录成功时调用
+        if ($("#remember_account").prop("checked") == true) {
+            var account_sid = $("#account_sid").val();
+            var account_pwd = $("#account_pwd").val();
+            $.cookie("remember_account", "true", {
+                expires: 7
+            }); // 存储一个带7天期限的 cookie
+            $.cookie("account_sid", account_sid, {
+                expires: 7
+            }); // 存储一个带7天期限的 cookie
+            $.cookie("account_pwd", account_pwd, {
+                expires: 7
+            }); // 存储一个带7天期限的 cookie
+        } else {
+            $.cookie("remember_account", "false", {
+                expires: -1
+            }); // 删除 cookie
+            $.cookie("account_sid", '', {
+                expires: -1
+            });
+            $.cookie("account_pwd", '', {
+                expires: -1
+            });
+        }
+    }
+
+    $(document).ready(function() {
+        //如果含有该cookie，自动填写账号密码
+        if ($.cookie("remember_account")) {
+            console.log($.cookie("remember_account"))
+            $("#remember_account").prop("checked", true);
+            $("#account_sid").val($.cookie("account_sid"));
+            $("#account_pwd").val($.cookie("account_pwd"));
+        }else {
+            console.error("cookie get error")
+        }
+
+
+        //注册校验
+        $('#registrationForm').bootstrapValidator({
+            // To use feedback icons, ensure that you use Bootstrap v3.1.0 or later
+            feedbackIcons: {
+                valid: 'glyphicon glyphicon-ok',
+                invalid: 'glyphicon glyphicon-remove',
+                validating: 'glyphicon glyphicon-refresh'
+            },
+            fields: {
+                sid: {
+                    message: 'The username is not valid',
+                    validators: {
+                        notEmpty: {
+                            message: '请填写学号！'
+                        },
+                        stringLength: {
+                            min: 3,
+                            max: 20,
+                            message: '学号为10位数！'
+                        },
+                        regexp: {
+                            regexp: /^\d{10}$/,                             ///^[a-zA-Z0-9]+$/,
+                            message: '学号只能为10位数字'
+                        },
+                    }
+                },
+                username: {
+                    message: 'The username is not valid',
+                    validators: {
+                        notEmpty: {
+                            message: '请填写用户名！'
+                        },
+                        stringLength: {
+                            min: 3,
+                            max: 20,
+                            message: '用户名在3~20个字符之间~'
+                        },
+                        regexp: {
+                            regexp: /^[a-zA-Z0-9]+$/,
+                            message: '用户名只能由字母和数字组成!'
+                        },
+                        different: {
+                            field: 'password',
+                            message: '用户名密码不能相同!'
+                        }
+                    }
+                },
+                password: {
+                    validators: {
+                        notEmpty: {
+                            message: '密码不能为空！'
+                        },
+                        different: {
+                            field: 'username',
+                            message: '用户密码不能相同！'
+                        },
+                        identical: {
+                            field: 'password2',
+                            massage: '请输入确认密码！'
+                        },
+                        stringLength: {
+                            min: 6,
+                            message: '密码长度至少为6个字符~'
+                        }
+                    }
+                },
+                password2: {
+                    validators: {
+                        notEmpty: {
+                            message: '请输入确认密码！'
+                        },
+                        different: {
+                            field: 'username',
+                            message: '用户密码不能相同！'
+                        },
+                        identical: {
+                            field: 'password',
+                            message: '两次密码输入不一致！'
+                        },
+                        stringLength: {
+                            min: 6,
+                            message: '密码长度至少为6个字符~'
+                        }
+                    }
+                },
+                // submitHandler: function (form) {
+                //     $.ajax({
+                //         type: 'post',
+                //         url: form.action,
+                //         data: form.serialize(),
+                //         success: function (res) {
+                //             console.log(res)
+                //
+                //         }
+                //     });
+                //     return false; // 阻止表单自动提交事件
+                // }
+            }
+        });
+        //注册ajax
+        $("#registrationForm").on('success.form.bv', function(e) {
+            e.preventDefault();
+            let $form = $(e.target);
+            let bv = $form.data('bootstrapValidator');
+            let action =$form.attr("action");
+            // console.log(action)
+            $.post(action,$form.serialize(),function(res){
+                console.log(res);
+                //模态框弹出
+                $("#loginModal").modal('toggle');
+                $("#modal_name").html(res.msg)
+            },"json");
+        });
+
+
+
+
+        //登录校验
+        $('#loginForm').bootstrapValidator({
+            // To use feedback icons, ensure that you use Bootstrap v3.1.0 or later
+            feedbackIcons: {
+                valid: 'glyphicon glyphicon-ok',
+                invalid: 'glyphicon glyphicon-remove',
+                validating: 'glyphicon glyphicon-refresh'
+            },
+            fields: {
+                sid:{
+                    message: 'The username is not valid',
+                    validators: {
+                        notEmpty: {
+                            message: '请填写学号！'
+                        },
+                        stringLength: {
+                            min: 3,
+                            max: 20,
+                            message: '学号为10位数！'
+                        },
+                        regexp: {
+                            regexp: /^[0-9]*$/,              ///^[a-zA-Z0-9]+$/,
+                            message: '学号只能为数字'
+                        },
+                    }
+                },
+                password: {
+                    validators: {
+                        notEmpty: {
+                            message: '密码不能为空！'
+                        },
+                        different: {
+                            field: 'sid',
+                            message: '账号密码不能相同！'
+                        },
+                        stringLength: {
+                            min: 6,
+                            message: '密码长度至少为6个字符~'
+                        }
+                    }
+                },
+
+
+            }
+        });
+        });
+
+
+        //登录ajax
+        $("#loginForm").on('success.form.bv', function(e) {
+            e.preventDefault();
+            let $form = $(e.target);
+            let bv = $form.data('bootstrapValidator');
+            let action =$form.attr("action");
+            // console.log(action)
+            $.post(action,$form.serialize(),function(res){
+
+                console.log(res);
+                if(res.result==1){
+                    //存储cookie
+                    saveUserInfo();
+                    //模态框弹出
+                    $("#loginModal").modal('toggle');
+                    $("#modal_result").html(res.msg);
+                    $("#modal_name").html("欢迎:"+res.extend.username+"使用北部湾大学二手交易平台！")
+                }else{
+                    //模态框弹出
+                    $("#loginModal").modal('toggle');
+                    $("#modal_result").html(res.msg);
+                }
+
+            },"json");
+        });
+</script>
+</body>
+</html>

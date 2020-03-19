@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>个人信息</title>
+    <link rel="stylesheet" th:href="@{css/jquery-ui.css}"/>
+    <link rel="icon" th:href="@{img/page_icon.png}"/>
+    <link rel="stylesheet" th:href="@{css/home_page/header_and_nav.css}"/>
+    <link rel="stylesheet" th:href="@{css/personal/personal_info.css}"/>
+    <script th:src="@{js/jquery-1.12.4.js}"></script>
+    <script th:src="@{js/jquery-ui.js}"></script>
+    <script th:src="@{js/home/header_model_js.js}"></script>
+    <script th:src="@{js/personal_info.js}">
+    </script>
+</head>
+<body>
+<header th:include="header :: copy"></header>
+<div th:include="short_nav_show :: short_nav_show" class="short_nav_show"></div>
+<nav th:include="my_nav :: my_nav" class="my_nav"></nav>
+<div th:include="personal_nav :: personal_nav" class="personal_nav"></div>
+<div style="display: none" th:if="${message}!=null" class="show_tip" th:text="${message}" th:value="${message}">
+</div>
+<input type="hidden" class="token" th:value="${token}"/>
+<div class="top_content">
+    <div class="publish_product_div">
+        <form id="update_user" th:action="@{/certification.do}" method="post">
+        </form>
+        <div id="accordion">
+                <h3>学号<span id="sid_span" class="sex_span" th:text="${userInfo.sid}"></span></h3>
+                <div class="info_content">
+                    <div class="first_info sex_info">
+                        <span>学号(不可修改)：</span>
+                        <span class="sex_span" th:text="${userInfo.sid}"></span>
+                    </div>
+                </div>
+                <h3>用户名：<span class="username_span" th:text="${userInfo.name}">123456</span></h3>
+                <div class="info_content">
+                    <div class="first_info">
+                        <span>用户名：</span><input type="text" class="name" name="name"/>
+                        <span class="reqiure_enter"> 必须填写此字段</span>
+                    </div>
+                    <button class="update_button">确认修改</button>
+                </div>
+                <h3>创建时间：<span class="dormitory_span" th:text="${userInfo.createTime}">&nbsp;</span></h3>
+                <div class="info_content">
+                    <div class="first_info">
+                        <span>创建时间：</span><input type="text" class="dormitory"/>
+                        <span class="reqiure_enter"> 必须填写此字段</span>
+                    </div>
+                    <button class="update_button">确认修改</button>
+                </div>
+            <h3>密码:<span class="dormitory_span" th:text="${userInfo.password}">&nbsp;</span></h3>
+            <div class="info_content">
+                <div class="first_info">
+                    <span>密码：</span><input type="text" class="dormitory"/>
+                    <span class="reqiure_enter"> 必须填写此字段</span>
+                </div>
+                <button class="update_button">确认修改</button>
+            </div>
+
+        </div>
+    </div>
+    <footer>
+        <p>Copyright © 2020..<a th:href="@{/}"></a></p>
+    </footer>
+</div>
+</body>
+</html>

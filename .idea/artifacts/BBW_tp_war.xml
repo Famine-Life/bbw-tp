@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="BBW-tp:war">
+    <output-path>$PROJECT_DIR$/target</output-path>
+    <properties id="maven-jee-properties">
+      <options>
+        <module>BBW-tp</module>
+        <packaging>war</packaging>
+      </options>
+    </properties>
+    <root id="archive" name="ROOT.war">
+      <element id="artifact" artifact-name="BBW-tp:war exploded" />
+    </root>
+  </artifact>
+</component>

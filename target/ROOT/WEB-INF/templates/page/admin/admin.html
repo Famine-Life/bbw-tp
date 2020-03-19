@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN"  xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>北部湾大学二手交易平台</title>
+    <link rel="icon" th:href="@{/img/page_icon.png}"/>
+    <link th:href="@{css/home_page/header_and_nav.css}" rel="stylesheet"/>
+    <link th:href="@{css/home_page/home_page_circle.css}" rel="stylesheet"/>
+    <link th:href="@{css/home_page/bottom_ifon_and_feature.css}" rel="stylesheet"/>
+    <script th:src="@{js/jquery-1.3.2.min.js}"></script>
+    <script th:src="@{js/home/home_page_circle.js}"></script>
+    <script th:src="@{js/home/header_model_js.js}"></script>
+    <!--    lay ui-->
+    <link th:href="@{layui/css/layui.css}" rel="stylesheet" />
+
+</head>
+<style>
+    .main-body{
+        margin-top:100px;
+        text-align: center;
+    }
+    .table-content{
+        width: 80%;
+        margin:0 auto;
+    }
+    a{
+        cursor:pointer;
+    }
+    .content-left,.content-right{
+        float:left;
+    }
+    .content-left{
+        width: 200px;
+        margin-top: 10px;
+        height: 600px;
+        background-color: #393D49;
+    }
+    .content-right{
+        width: 80%;
+    }
+    #model div,#model_order div{
+        font-size: 14px;
+        font-weight: 400;
+    }
+    #model input,#model_order input{
+        width: 300px;
+        outline-style: none;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        padding: 5px 10px;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: "Microsoft soft";
+    }
+    #model,#model_order{
+        display:none;
+        padding: 10px;
+    }
+</style>
+<body>
+<header th:include="header :: copy"></header>
+<div th:include="short_nav_show :: short_nav_show" class="short_nav_show"></div>
+<div th:include="personal_nav :: personal_nav" class="personal_nav"></div>
+<div class="main-body">
+    <div class="table-content">
+        <div class="content-left">
+            <ul class="layui-nav layui-nav-tree" lay-filter="test">
+                <!-- 侧边导航: <ul class="layui-nav layui-nav-tree layui-nav-side"> -->
+                <li class="layui-nav-item layui-nav-itemed">
+                    <a href="javascript:;">管理项</a>
+                    <dl class="layui-nav-child">
+                        <dd><a id="userBtn">用户管理</a></dd>
+                        <dd><a id="orderBtn">订单管理</a></dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+        <div class="content-right">
+            <table class="layui-hide" id="admin_tab" lay-filter="test"></table>
+            <script type="text/html" id="barDemo">
+                <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">查看</a>
+                <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+                <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+            </script>
+        </div>
+    </div>
+</div>
+<div id="model">
+    <form id="model_form">
+        <div>用户id:</div><input type="text" name="sid" />
+        <div>用户名:</div><input type="text" name="name" />
+        <div>用户密码:</div><input type="password" name="password" />
+        <div>creatTime:</div><input type="text" name="creaTime" />
+        <div>管理员:</div><input type="text" name="isManager" />
+        <button type="button" id="model_submit" class="layui-btn">提交</button>
+    </form>
+</div>
+<div id="model_order">
+    <form id="model_form_order">
+        <div>订单id:</div><input type="text" name="id" />
+        <div>用户id</div><input type="text" name="uid" />
+        <div>creatTime:</div><input type="text" name="creaTime" />
+        <div>地址:</div><input type="text" name="address" />
+        <button type="button" id="model_submit_order" class="layui-btn">提交</button>
+    </form>
+</div>
+
+<script th:src="@{layui/layui.js}"></script>
+<script>
+    $(function () {
+        let url= '/getAllUsers.do'; //用户信息数据接口;
+        let obj_role="user";
+        let cols=[[ //表头
+            {type: 'checkbox', fixed: 'left'}
+            ,{field: 'sid', title: 'ID', sort: true, fixed: 'left', totalRowText: '合计：'}
+            ,{field: 'name', title: '用户名'}
+            ,{field: 'password', title: '密码', sort: true, totalRow: true}
+            ,{field: 'createTime',width:160, title: '创建时间', sort: true}
+            ,{field: 'isManager', title: '管理员', sort: true, totalRow: true}
+            ,{fixed: 'right',width:200, align:'center', toolbar: '#barDemo'}
+        ]];
+        //从表头中获取当前的字段值，，比如，用户表为：sid ，订单表为：id
+        var this_id = cols[0][1].field;
+        var checked_data_list=[];
+        var tableIns;
+
+        layui.config({
+            version: '1579809530538' //为了更新 js 缓存，可忽略
+        });
+
+        layui.use(['laypage', 'layer', 'table',], function(){
+            var laypage = layui.laypage //分页
+                ,layer = layui.layer //弹层
+                ,table = layui.table //表格
+
+            //向世界问个好
+            layer.msg('欢迎来到湾大二手交易平台管理界面!');
+            //执行一个 table 实例
+            tableIns = table.render({
+                elem: '#admin_tab'
+                ,height: 600
+                //,url: '/getAllUsers.do' //数据接口
+                ,url:url
+                ,title: '管理表'
+                ,page: false //开启分页
+                ,toolbar: 'default' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+                ,defaultToolbar:['']
+                ,cols: cols
+                ,limit:10
+            });
+
+
+            var checkStatus;
+            //监听头工具栏事件
+            table.on('toolbar(test)', function(obj){
+                //console.log(url);
+                //console.log(cols);
+                //console.log("test:",cols[0][1]);
+                //console.log("test:",cols[0][1].field);
+                checkStatus = table.checkStatus(obj.config.id)
+                    ,data = checkStatus.data; //获取选中的数据
+                switch(obj.event){
+                    case 'add':
+                        if (obj_role==="user"){
+                            layer.msg('为了保证账号格式正确，请到注册页面注册用户！')
+                        }
+                        if(obj_role==="order"){
+                            layer.msg('订单请到购物车添加!');
+                        }
+                        break;
+                    case 'update':
+                        if(data.length === 0){
+                            layer.msg('请选择一行');
+                        } else if(data.length > 1){
+                            layer.msg('只能同时编辑一个');
+                        } else {
+                            layer.alert('编辑 [id]：'+ checkStatus.data[0][this_id]);
+                        }
+                        break;
+                    case 'delete':
+                        if(data.length === 0){
+                            layer.msg('请选择一行');
+                        } else {
+                            console.log("checked_data:",checked_data_list);
+                            if(obj_role==="user"){
+                                var post_url = "/deleteUsers.do";
+                            }
+                            if (obj_role==="order"){
+                                post_url = "/deleteOrders.do";
+                            }
+                            $.ajax({
+                                url:post_url,
+                                type: "post",
+                                traditional:true,
+                                data:{
+                                    list:checked_data_list
+                                },
+                                dataType:"json",
+                                success:function(data){
+                                    console.log(post_url);
+                                    console.log(data);
+                                    if (data.result===1){
+                                        layer.msg("操作结果："+data.msg);
+                                        //table.reload("admin_tab",{});
+                                        tableIns.reload();
+                                    }else{
+                                        layer.msg("操作提示:"+data.msg)
+                                        tableIns.reload();
+                                    }
+                                }
+                            });
+
+                        }
+                        break;
+                };
+            });
+
+            //监听行工具事件
+            table.on('tool(test)', function(obj){
+                //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                var data = obj.data //获得当前行数据
+                    ,layEvent = obj.event; //获得 lay-event 对应的值
+                if(layEvent === 'detail'){
+                    //layer.msg('查看操作');
+                    if(obj_role==="order"){
+                        window.location.href="/getMyOrders.do";
+                    }else {
+                        //$("#model").show();
+                        $("#model_submit").hide();
+                        $("#model").children("#model_form").children("[name=sid]").val(obj.data.sid);
+                        $("#model").children("#model_form").children("[name=name]").val(obj.data.name);
+                        $("#model").children("#model_form").children("[name=password]").val(obj.data.password);
+                        $("#model").children("#model_form").children("[name=createTime]").val(obj.data.createTime);
+                        $("#model").children("#model_form").children("[name=isManager]").val(obj.data.isManager);
+
+                        layer.open({
+                            area: ['350px'],
+                            offset: '120px',
+                            type: 1,
+                            content: $("#model")
+                        });
+
+                        //layer.msg('查看操作');
+                    }
+                } else if(layEvent === 'del'){
+                    layer.confirm('真的删除行么', function(index){
+                        console.log(data);
+                        var arr_index_id = [];
+                        arr_index_id.push(data[this_id]);
+                        console.log("arr_index_id:",arr_index_id);
+                        //向服务端发送删除指令
+                        //console.log("checked_data:",checked_data_list);
+                        if(obj_role==="user"){
+                            var post_url = "/deleteUsers.do";
+                        }
+                        if (obj_role==="order"){
+                            post_url = "/deleteOrders.do";
+                        }
+                        $.ajax({
+                            url:post_url,
+                            type: "post",
+                            traditional:true,
+                            data:{
+                                list:arr_index_id
+                            },
+                            dataType:"json",
+                            success:function(data){
+                                console.log(post_url);
+                                console.log(data);
+                                if (data.result===1){
+                                    layer.msg("操作结果："+data.msg);
+                                    //table.reload("admin_tab",{});
+                                    //tableIns.reload();
+                                    obj.del(); //删除对应行（tr）的DOM结构
+                                    layer.close(index);
+                                }else{
+                                    layer.msg("操作提示:"+data.msg);
+                                    tableIns.reload();
+                                }
+                            }
+                        });
+                    });
+                } else if(layEvent === 'edit'){
+                    if(obj_role==="user"){
+                        var post_url = "/updateUser.do";
+                        //$("#model").show();
+                        $("#model_submit").show();
+                        $("#model").children("#model_form").children("[name=sid]").val(obj.data.sid);
+                        $("#model").children("#model_form").children("[name=name]").val(obj.data.name);
+                        $("#model").children("#model_form").children("[name=password]").val(obj.data.password);
+                        $("#model").children("#model_form").children("[name=createTime]").val(obj.data.createTime);
+                        $("#model").children("#model_form").children("[name=isManager]").val(obj.data.isManager);
+
+                        layer.open({
+                            area: ['350px'],
+                            offset: '120px',
+                            type: 1,
+                            content: $("#model")
+                        });
+                        $("#model_submit").click(function () {
+                            //点击后，获取改变后的值
+                            let form = $("#model_form").serialize();
+                            console.log(form);
+                            $.ajax({
+                                url:post_url,
+                                type:'post',
+                                data:form,
+                                //contentType:'application/json',
+                                success:function (res) {
+                                    console.log(res);
+                                    layer.closeAll();
+                                    tableIns.reload();
+                                }
+                            })
+
+                        });
+                    }
+                    if (obj_role==="order"){
+                        post_url = "/updateOrder.do";
+                        //$("#model").show();
+                        $("#model_submit_order").show();    //按钮显示
+                        $("#model_order").children("#model_form_order").children("[name=id]").val(obj.data.id);
+                        $("#model_order").children("#model_form_order").children("[name=uid]").val(obj.data.uid);
+                        $("#model_order").children("#model_form_order").children("[name=createTime]").val(obj.data.createTime);
+                        $("#model_order").children("#model_form_order").children("[name=address]").val(obj.data.address);
+
+                        layer.open({
+                            area: ['350px'],
+                            offset: '120px',
+                            type: 1,
+                            content: $("#model_order")
+                        });
+                        $("#model_submit_order").click(function () {
+                            //点击后，获取改变后的值
+                            let form_order = $("#model_form_order").serialize();
+                            console.log(form_order);
+                            $.ajax({
+                                url:post_url,
+                                type:'post',
+                                data:form_order,
+                                //contentType:'application/json',
+                                success:function (res) {
+                                    console.log(res);
+                                    layer.closeAll();
+                                    tableIns.reload();
+                                }
+                            })
+
+                        });
+                    }
+
+
+                }
+            });
+
+
+            //监听复选框
+            table.on('checkbox(test)', function(obj){
+                // console.log(obj.checked); //当前是否选中状态
+                // console.log(obj.data); //选中行的相关数据
+                // console.log(obj.data[this_id]); //选中行的相关数据
+                if(obj.checked){
+                    checked_data_list.push(obj.data[this_id]);
+                }else{
+                    checked_data_list.pop();
+                }
+                //console.log(obj.type); //如果触发的是全选，则为：all，如果触发的是单选，则为：one
+            });
+
+            //分页
+            laypage.render({
+                elem: 'pageDemo' //分页容器的id
+                ,count: 100 //总页数
+                ,skin: '#1E9FFF' //自定义选中色值
+                //,skip: true //开启跳页
+                ,jump: function(obj, first){
+                    if(!first){
+                        layer.msg('第'+ obj.curr +'页', {offset: 'b'});
+                    }
+                }
+            });
+
+
+        });
+
+        //用户管理按钮点击函数
+        $("#userBtn").click(function () {
+            //console.log("user btn click!");
+            url = '/getAllUsers.do'; //用户信息数据接口
+            cols = [[ //表头
+                {type: 'checkbox', fixed: 'left'}
+                ,{field: 'sid', title: 'ID', sort: true, fixed: 'left', totalRowText: '合计：'}
+                ,{field: 'name', title: '用户名'}
+                ,{field: 'password', title: '密码', sort: true, totalRow: true}
+                ,{field: 'createTime',width:160, title: '创建时间', sort: true}
+                ,{field: 'isManager', title: '管理员', sort: true, totalRow: true}
+                ,{fixed: 'right',width:200, align:'center', toolbar: '#barDemo'}
+            ]];
+            checked_data_list=[];
+            //从表头中获取当前的字段值，，比如，用户表为：sid ，订单表为：id
+            this_id = cols[0][1].field;
+            obj_role = "user";
+
+            layui.use(['laypage', 'layer', 'table',], function(){
+                var laypage = layui.laypage //分页
+                    ,layer = layui.layer //弹层
+                    ,table = layui.table //表格
+
+
+                // //向世界问个好
+                // layer.msg('欢迎来到湾大二手交易平台管理界面!');
+                //执行一个 table 实例
+                tableIns =table.render({
+                    elem: '#admin_tab'
+                    ,height: 600
+                    //,url: '/getAllUsers.do' //数据接口
+                    ,url:url
+                    ,title: '管理表'
+                    ,page: false //开启分页
+                    ,toolbar: 'default' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+                    ,defaultToolbar:['']
+                    ,cols: cols
+                    ,limit:10
+                });
+
+                // //监听头工具栏事件
+                // table.on('toolbar(test)', function(obj){
+                //     var checkStatus = table.checkStatus(obj.config.id)
+                //         ,data = checkStatus.data; //获取选中的数据
+                //     switch(obj.event){
+                //         case 'add':
+                //             layer.msg('添加');
+                //             break;
+                //         case 'update':
+                //             if(data.length === 0){
+                //                 layer.msg('请选择一行');
+                //             } else if(data.length > 1){
+                //                 layer.msg('只能同时编辑一个');
+                //             } else {
+                //                 layer.alert('编辑 [id]：'+ checkStatus.data[0].sid);
+                //             }
+                //             break;
+                //         case 'delete':
+                //             if(data.length === 0){
+                //                 layer.msg('请选择一行');
+                //             } else {
+                //                 layer.msg('删除');
+                //             }
+                //             break;
+                //     };
+                // });
+                //
+                // //监听行工具事件
+                // table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                //     var data = obj.data //获得当前行数据
+                //         ,layEvent = obj.event; //获得 lay-event 对应的值
+                //     if(layEvent === 'detail'){
+                //         layer.msg('查看操作');
+                //     } else if(layEvent === 'del'){
+                //         layer.confirm('真的删除行么', function(index){
+                //             obj.del(); //删除对应行（tr）的DOM结构
+                //             layer.close(index);
+                //             //向服务端发送删除指令
+                //         });
+                //     } else if(layEvent === 'edit'){
+                //         layer.msg('编辑操作');
+                //     }
+                // });
+                //
+                // //分页
+                // laypage.render({
+                //     elem: 'pageDemo' //分页容器的id
+                //     ,count: 100 //总页数
+                //     ,skin: '#1E9FFF' //自定义选中色值
+                //     //,skip: true //开启跳页
+                //     ,jump: function(obj, first){
+                //         if(!first){
+                //             layer.msg('第'+ obj.curr +'页', {offset: 'b'});
+                //         }
+                //     }
+                // });
+
+
+            });
+        });
+        //订单管理按钮点击函数
+        $("#orderBtn").click(function () {
+            //console.log("order btn click!");
+            url = '/getAllOrders.do'; //订单信息数据接口
+            cols = [[ //表头
+                {type: 'checkbox', fixed: 'left'}
+                ,{field: 'id', title: '订单ID', sort: true, fixed: 'left', totalRowText: '合计：'}
+                ,{field: 'uid', title: '用户id', sort:true}
+                ,{field: 'modified',width:160, title: '创建时间', sort: true, totalRow: true}
+                ,{field: 'address', title: '地址'}
+                ,{fixed: 'right',width:200, align:'center', toolbar: '#barDemo'}
+            ]];
+
+            checked_data_list=[];
+            //从表头中获取当前的字段值，，比如，用户表为：sid ，订单表为：id
+            this_id = cols[0][1].field;
+            obj_role="order";
+
+
+            layui.use(['laypage', 'layer', 'table',], function(){
+                var laypage = layui.laypage //分页
+                    ,layer = layui.layer //弹层
+                    ,table = layui.table //表格
+                // //向世界问个好
+                // layer.msg('欢迎来到湾大二手交易平台管理界面!');
+                //执行一个 table 实例
+                tableIns=table.render({
+                    elem: '#admin_tab'
+                    ,height: 600
+                    //,url: '/getAllUsers.do' //数据接口
+                    ,url:url
+                    ,title: '管理表'
+                    ,page: false //开启分页
+                    ,toolbar: 'default' //开启工具栏，此处显示默认图标，可以自定义模板，详见文档
+                    ,defaultToolbar:['']
+                    ,cols: cols
+                    ,limit:10
+                });
+
+                // //监听头工具栏事件
+                // table.on('toolbar(test)', function(obj){
+                //     var checkStatus = table.checkStatus(obj.config.id)
+                //         ,data = checkStatus.data; //获取选中的数据
+                //     switch(obj.event){
+                //         case 'add':
+                //             layer.msg('添加');
+                //             break;
+                //         case 'update':
+                //             if(data.length === 0){
+                //                 layer.msg('请选择一行');
+                //             } else if(data.length > 1){
+                //                 layer.msg('只能同时编辑一个');
+                //             } else {
+                //                 layer.alert('编辑 [id]：'+ checkStatus.data[0].sid);
+                //             }
+                //             break;
+                //         case 'delete':
+                //             if(data.length === 0){
+                //                 layer.msg('请选择一行');
+                //             } else {
+                //                 layer.msg('删除');
+                //             }
+                //             break;
+                //     };
+                // });
+                //
+                // //监听行工具事件
+                // table.on('tool(test)', function(obj){ //注：tool 是工具条事件名，test 是 table 原始容器的属性 lay-filter="对应的值"
+                //     var data = obj.data //获得当前行数据
+                //         ,layEvent = obj.event; //获得 lay-event 对应的值
+                //     if(layEvent === 'detail'){
+                //         layer.msg('查看操作');
+                //     } else if(layEvent === 'del'){
+                //         layer.confirm('真的删除行么', function(index){
+                //             obj.del(); //删除对应行（tr）的DOM结构
+                //             layer.close(index);
+                //             //向服务端发送删除指令
+                //         });
+                //     } else if(layEvent === 'edit'){
+                //         layer.msg('编辑操作');
+                //     }
+                // });
+                //
+                // //分页
+                // laypage.render({
+                //     elem: 'pageDemo' //分页容器的id
+                //     ,count: 100 //总页数
+                //     ,skin: '#1E9FFF' //自定义选中色值
+                //     //,skip: true //开启跳页
+                //     ,jump: function(obj, first){
+                //         if(!first){
+                //             layer.msg('第'+ obj.curr +'页', {offset: 'b'});
+                //         }
+                //     }
+                // });
+
+
+            });
+        })
+
+
+
+    })
+
+
+
+</script>
+
+</body>
+</html>

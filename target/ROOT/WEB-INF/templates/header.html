@@ -1,0 +1,29 @@
+
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="copy" th:fragment="copy">
+    <span class="short_nav"></span>
+    <div class="home_icon">
+        <a th:href="@{/}" style="width:100px;font-size:22px;text-decoration: none;color: white">湾大二手</a>
+    </div>
+    <ul  class="my_nav">
+        <li><a  th:href="@{/}">首页</a></li>
+        <li><a th:href="@{mall_page.do}"  >商城</a></li>
+    </ul>
+    <input type="text" placeholder="Search" name="search" class="nav_search_input"/>
+    <span class="search_icon"></span>
+    <span class="user_icon"></span>
+    <span class="login_or_register_string">
+        <!--判断是否有登陆，两者相互替换-->
+<!--        <a class="user_name_a" th:href="@{/login.do}" th:text="${#strings.isEmpty(userInfo.name)}?'登录':${userInfo.username}" >登录</a>-->
+<!--        <a id="user_name_a" th:href="@{/login.do}" th:text="${#strings.isEmpty(userInfo.name)}?'注册':${userInfo.username}" >注册</a>-->
+        <a th:href="@{/login.do}" th:if="${userInfo.name}==null" id="user_name_a" th:value="test">登录</a>
+        <a th:href="@{/login.do}"  th:if="${userInfo.name}==null">注册</a>
+        <a class="user_name_a"
+           th:if="${userInfo.name!=null}" th:text="${userInfo.name}" th:value="${userInfo.name}" id="user_name_a"></a>
+
+    </span>
+
+</header>
+</body>
+</html>
