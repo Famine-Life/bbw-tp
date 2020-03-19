@@ -14,4 +14,4 @@ readme_image文件夹含有部分截图:
 ![manerger](readme_image/manerger.png)
 
 
-
+数据库文件已存sql文件夹
