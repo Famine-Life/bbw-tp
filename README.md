@@ -5,7 +5,7 @@
 
 我修改了大部分滥用定位的问题，重写了user的字段和登录注册页面，去除了一些不需要的功能，并且**新增用户管理和订单管理**的功能。
 
-readme_image文件夹含有部分截图:
+ - readme_image文件夹含有部分截图:
 
 ![index](readme_image/index.png)
 
@@ -14,4 +14,4 @@ readme_image文件夹含有部分截图:
 ![manerger](readme_image/manerger.png)
 
 
-数据库文件已存sql文件夹
+ - 数据库文件已存sql文件夹
